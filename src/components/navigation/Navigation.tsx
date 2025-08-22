@@ -45,6 +45,12 @@ const Navigation: React.FC<NavigationProps> = ({
       label: 'Post Project', 
       icon: Plus,
       available: ['client']
+    },
+    { 
+      id: 'milestones', 
+      label: 'Milestones', 
+      icon: Briefcase,
+      available: ['freelancer', 'client']
     }
   ];
 

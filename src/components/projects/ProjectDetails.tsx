@@ -14,10 +14,14 @@ import {
 import { format } from 'date-fns';
 import { useProjectDetails } from '../../hooks/useProjects';
 import { useProjectProposals } from '../../hooks/useProposals';
+import { useProjectMilestones } from '../../hooks/useMilestones';
+import { useProjectFiles } from '../../hooks/useFiles';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ProposalSubmissionForm from '../proposals/ProposalSubmissionForm';
+import MilestoneBoard from '../milestones/MilestoneBoard';
+import FileManager from '../files/FileManager';
 
 interface ProjectDetailsProps {
   projectId: string;
@@ -31,10 +35,12 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   userType = 'freelancer'
 }) => {
   const [showProposalForm, setShowProposalForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'proposals'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'proposals' | 'milestones' | 'files'>('details');
 
   const { data: project, isLoading: projectLoading } = useProjectDetails(projectId);
   const { data: proposals, isLoading: proposalsLoading } = useProjectProposals(projectId);
+  const { data: milestones, isLoading: milestonesLoading, refetch: refetchMilestones } = useProjectMilestones(projectId);
+  const { data: files, isLoading: filesLoading } = useProjectFiles(projectId);
 
   if (projectLoading) {
     return (
@@ -157,7 +163,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           )}
 
           {/* Tabs for Client View */}
-          {userType === 'client' && (
+          {(userType === 'client' || project.status === 'in_progress') && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -186,10 +192,82 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 >
                   Proposals ({proposals?.length || 0})
                 </button>
+                <button
+                  onClick={() => setActiveTab('milestones')}
+                  className={`px-6 py-4 font-medium transition-colors ${
+                    activeTab === 'milestones'
+                      ? 'text-[#FDB813] border-b-2 border-[#FDB813]'
+                      : 'text-gray-600 hover:text-[#222]'
+                  }`}
+                >
+                  Milestones ({milestones?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('files')}
+                  className={`px-6 py-4 font-medium transition-colors ${
+                    activeTab === 'files'
+                      ? 'text-[#FDB813] border-b-2 border-[#FDB813]'
+                      : 'text-gray-600 hover:text-[#222]'
+                  }`}
+                >
+                  Files ({files?.length || 0})
+                </button>
               </div>
 
               {/* Tab Content */}
               <div className="p-6">
+                {activeTab === 'milestones' && (
+                  <div>
+                    {milestonesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <LoadingSpinner />
+                      </div>
+                    ) : milestones && milestones.length > 0 ? (
+                      <MilestoneBoard
+                        projectId={projectId}
+                        milestones={milestones}
+                        onMilestoneUpdate={refetchMilestones}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Calendar className="text-gray-400" size={24} />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#222] mb-2">No milestones yet</h3>
+                        <p className="text-gray-600">Milestones will appear here once the project starts</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'files' && (
+                  <div>
+                    {filesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <LoadingSpinner />
+                      </div>
+                    ) : (
+                      <FileManager
+                        projectId={projectId}
+                        files={files || []}
+                        onFileUpload={(files, category, milestoneId) => {
+                          // Handle file upload
+                          console.log('Upload files:', files, category, milestoneId);
+                        }}
+                        onFileDelete={(fileId) => {
+                          // Handle file delete
+                          console.log('Delete file:', fileId);
+                        }}
+                        onFileDownload={(fileId) => {
+                          // Handle file download
+                          console.log('Download file:', fileId);
+                        }}
+                        userRole={userType}
+                      />
+                    )}
+                  </div>
+                )}
+                
                 {activeTab === 'proposals' && (
                   <div className="space-y-4">
                     {proposalsLoading ? (

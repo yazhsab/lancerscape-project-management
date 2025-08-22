@@ -5,6 +5,7 @@ import Navigation from './components/navigation/Navigation';
 import ProjectBrowser from './components/projects/ProjectBrowser';
 import ProjectDetails from './components/projects/ProjectDetails';
 import MyProjectsDashboard from './components/dashboard/MyProjectsDashboard';
+import MilestoneBoard from './components/milestones/MilestoneBoard';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -17,7 +18,7 @@ const queryClient = new QueryClient({
 });
 
 type UserType = 'freelancer' | 'client';
-type ViewType = 'browse' | 'my-projects' | 'create' | 'project-details';
+type ViewType = 'browse' | 'my-projects' | 'create' | 'project-details' | 'milestones';
 
 function App() {
   const [userType, setUserType] = useState<UserType>('freelancer');
@@ -67,6 +68,20 @@ function App() {
             showCreateButton={true}
             userType={userType}
           />
+        );
+      
+      case 'milestones':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-[#222]">Milestone Dashboard</h1>
+              <p className="text-gray-600 mt-1">Track progress across all your projects</p>
+            </div>
+            {/* This would show milestones from all projects */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <p className="text-gray-600">Select a project to view its milestones</p>
+            </div>
+          </div>
         );
       
       case 'project-details':
