@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWebSocket } from './hooks/useWebSocket';
 import Navigation from './components/navigation/Navigation';
@@ -7,16 +6,6 @@ import ProjectBrowser from './components/projects/ProjectBrowser';
 import ProjectDetails from './components/projects/ProjectDetails';
 import MyProjectsDashboard from './components/dashboard/MyProjectsDashboard';
 import MilestoneBoard from './components/milestones/MilestoneBoard';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 type UserType = 'freelancer' | 'client';
 type ViewType = 'browse' | 'my-projects' | 'create' | 'project-details' | 'milestones';
@@ -107,41 +96,39 @@ function App() {
         );
     }
   };
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-[#F5F5F5]">
-        {/* WebSocket Connection Status */}
-        {!isConnected && (
-          <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-center">
-            <p className="text-yellow-800 text-sm">
-              Reconnecting to live updates...
-            </p>
-          </div>
-        )}
-        
-        <Navigation
-          activeView={activeView}
-          onViewChange={handleViewChange}
-          userType={userType}
-          onUserTypeChange={setUserType}
-        />
-        
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeView}-${selectedProjectId}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderMainContent()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-      </div>
-    </QueryClientProvider>
+    <div className="min-h-screen bg-[#F5F5F5]">
+      {/* WebSocket Connection Status */}
+      {!isConnected && (
+        <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-center">
+          <p className="text-yellow-800 text-sm">
+            Reconnecting to live updates...
+          </p>
+        </div>
+      )}
+      
+      <Navigation
+        activeView={activeView}
+        onViewChange={handleViewChange}
+        userType={userType}
+        onUserTypeChange={setUserType}
+      />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeView}-${selectedProjectId}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderMainContent()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      
+      <NotificationCenter />
+    </div>
   );
 }
 
