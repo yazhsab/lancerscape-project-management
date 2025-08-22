@@ -11,13 +11,23 @@ import NotificationCenter from './components/notifications/NotificationCenter';
 type UserType = 'freelancer' | 'client';
 type ViewType = 'browse' | 'my-projects' | 'create' | 'project-details' | 'milestones';
 
+// Generate a unique user ID for demo purposes
+const generateUserId = () => {
+  const stored = localStorage.getItem('demo-user-id');
+  if (stored) return stored;
+  
+  const newId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  localStorage.setItem('demo-user-id', newId);
+  return newId;
+};
+
 function App() {
   const [userType, setUserType] = useState<UserType>('freelancer');
   const [activeView, setActiveView] = useState<ViewType>('browse');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
-  // Initialize WebSocket connection
-  const { isConnected } = useWebSocket('current-user-id'); // You'd get this from auth context
+  // Initialize WebSocket connection with a valid user ID
+  const { isConnected } = useWebSocket(generateUserId());
 
   const handleViewChange = (view: string) => {
     setActiveView(view as ViewType);
