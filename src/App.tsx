@@ -6,6 +6,7 @@ import ProjectBrowser from './components/projects/ProjectBrowser';
 import ProjectDetails from './components/projects/ProjectDetails';
 import MyProjectsDashboard from './components/dashboard/MyProjectsDashboard';
 import MilestoneBoard from './components/milestones/MilestoneBoard';
+import NotificationCenter from './components/notifications/NotificationCenter';
 
 type UserType = 'freelancer' | 'client';
 type ViewType = 'browse' | 'my-projects' | 'create' | 'project-details' | 'milestones';
