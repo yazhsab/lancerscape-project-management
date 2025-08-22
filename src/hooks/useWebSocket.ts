@@ -10,6 +10,7 @@ interface WebSocketMessage {
 export const useWebSocket = (userId: string) => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const queryClient = useQueryClient();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
@@ -17,6 +18,13 @@ export const useWebSocket = (userId: string) => {
   const maxReconnectAttempts = 5;
 
   const connect = () => {
+    // Skip WebSocket connection in development if no server is available
+    if (import.meta.env.DEV && !import.meta.env.VITE_WS_URL) {
+      console.log('WebSocket disabled in development - no VITE_WS_URL configured');
+      setConnectionError('WebSocket disabled in development');
+      return;
+    }
+
     try {
       const wsUrl = `${import.meta.env.VITE_WS_URL || 'wss://api.lancerscape.in'}/ws?userId=${userId}`;
       wsRef.current = new WebSocket(wsUrl);
@@ -24,6 +32,7 @@ export const useWebSocket = (userId: string) => {
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
+        setConnectionError(null);
         reconnectAttempts.current = 0;
       };
 
@@ -41,8 +50,8 @@ export const useWebSocket = (userId: string) => {
         console.log('WebSocket disconnected');
         setIsConnected(false);
         
-        // Attempt to reconnect
-        if (reconnectAttempts.current < maxReconnectAttempts) {
+        // Only attempt to reconnect if not in development mode
+        if (reconnectAttempts.current < maxReconnectAttempts && !import.meta.env.DEV) {
           reconnectAttempts.current++;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
           
@@ -50,14 +59,18 @@ export const useWebSocket = (userId: string) => {
             console.log(`Attempting to reconnect... (${reconnectAttempts.current}/${maxReconnectAttempts})`);
             connect();
           }, delay);
+        } else if (import.meta.env.DEV) {
+          setConnectionError('WebSocket server not available in development');
         }
       };
 
       wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.log('WebSocket connection failed - this is normal in development');
+        setConnectionError('WebSocket connection failed');
       };
     } catch (error) {
-      console.error('Failed to connect to WebSocket:', error);
+      console.log('Failed to connect to WebSocket - this is normal in development');
+      setConnectionError('Failed to connect to WebSocket');
     }
   };
 
@@ -92,6 +105,8 @@ export const useWebSocket = (userId: string) => {
         ...message,
         timestamp: new Date().toISOString()
       }));
+    } else {
+      console.log('WebSocket not connected - message not sent:', message);
     }
   };
 
@@ -113,6 +128,7 @@ export const useWebSocket = (userId: string) => {
   return {
     isConnected,
     lastMessage,
-    sendMessage
+    sendMessage,
+    connectionError
   };
 };

@@ -27,7 +27,7 @@ function App() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
   // Initialize WebSocket connection with a valid user ID
-  const { isConnected } = useWebSocket(generateUserId());
+  const { isConnected, connectionError } = useWebSocket(generateUserId());
 
   const handleViewChange = (view: string) => {
     setActiveView(view as ViewType);
@@ -111,10 +111,18 @@ function App() {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       {/* WebSocket Connection Status */}
-      {!isConnected && (
+      {!isConnected && !connectionError && (
         <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-center">
           <p className="text-yellow-800 text-sm">
             Reconnecting to live updates...
+          </p>
+        </div>
+      )}
+      
+      {connectionError && import.meta.env.DEV && (
+        <div className="bg-blue-100 border-b border-blue-200 px-4 py-2 text-center">
+          <p className="text-blue-800 text-sm">
+            Development Mode: Real-time updates disabled (WebSocket server not available)
           </p>
         </div>
       )}
