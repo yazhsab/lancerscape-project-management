@@ -19,6 +19,8 @@ import {
   X
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFileUpload, useFileDelete, useFileDownload } from '../../hooks/useFiles';
+import FileUploadZone from './FileUploadZone';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -63,7 +65,11 @@ const FileManager: React.FC<FileManagerProps> = ({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadCategory, setUploadCategory] = useState<string>('other');
+  
+  const fileUpload = useFileUpload();
+  const fileDelete = useFileDelete();
+  const fileDownload = useFileDownload();
 
   const categories = [
     { key: 'all', label: 'All Files', color: 'default' },
@@ -105,21 +111,9 @@ const FileManager: React.FC<FileManagerProps> = ({
     setDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    if (droppedFiles.length > 0) {
-      onFileUpload(droppedFiles, 'other');
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    if (selectedFiles.length > 0) {
-      onFileUpload(selectedFiles, 'other');
-    }
+  const handleFileUpload = (files: File[], category: string, milestoneId?: string) => {
+    onFileUpload(files, category, milestoneId);
+    setShowUploadModal(false);
   };
 
   const toggleFileSelection = (fileId: string) => {
@@ -148,36 +142,23 @@ const FileManager: React.FC<FileManagerProps> = ({
             </button>
           </div>
           
-          <div
-            className={`
-              border-2 border-dashed rounded-lg p-8 text-center transition-colors
-              ${dragOver ? 'border-[#FDB813] bg-yellow-50' : 'border-gray-300'}
-            `}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <Upload className="mx-auto mb-4 text-gray-400" size={48} />
-            <p className="text-gray-600 mb-4">
-              Drag and drop files here or click to browse
-            </p>
-            <Button onClick={() => fileInputRef.current?.click()}>
-              Choose Files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+          <FileUploadZone
+            projectId={projectId}
+            category={uploadCategory}
+            onUploadComplete={() => setShowUploadModal(false)}
+            maxFileSize={50}
+            multiple={true}
+          />
           
           <div className="mt-4">
             <label className="block text-sm font-medium text-[#222] mb-2">
               Category
             </label>
-            <select className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FDB813]">
+            <select 
+              value={uploadCategory}
+              onChange={(e) => setUploadCategory(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FDB813]"
+            >
               <option value="requirement">Requirements</option>
               <option value="deliverable">Deliverables</option>
               <option value="reference">References</option>
@@ -236,7 +217,12 @@ const FileManager: React.FC<FileManagerProps> = ({
           <Eye size={14} className="mr-1" />
           View
         </Button>
-        <Button size="sm" variant="outline" className="flex-1">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => fileDownload.mutate({ projectId, fileId: file.id })}
+        >
           <Download size={14} className="mr-1" />
           Download
         </Button>
@@ -284,7 +270,12 @@ const FileManager: React.FC<FileManagerProps> = ({
           <Share2 size={16} />
         </Button>
         {userRole === 'client' && (
-          <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700">
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="text-red-500 hover:text-red-700"
+            onClick={() => fileDelete.mutate({ projectId, fileId: file.id })}
+          >
             <Trash2 size={16} />
           </Button>
         )}

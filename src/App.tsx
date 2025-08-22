@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWebSocket } from './hooks/useWebSocket';
 import Navigation from './components/navigation/Navigation';
 import ProjectBrowser from './components/projects/ProjectBrowser';
 import ProjectDetails from './components/projects/ProjectDetails';
@@ -24,6 +25,9 @@ function App() {
   const [userType, setUserType] = useState<UserType>('freelancer');
   const [activeView, setActiveView] = useState<ViewType>('browse');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  
+  // Initialize WebSocket connection
+  const { isConnected } = useWebSocket('current-user-id'); // You'd get this from auth context
 
   const handleViewChange = (view: string) => {
     setActiveView(view as ViewType);
@@ -107,6 +111,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-[#F5F5F5]">
+        {/* WebSocket Connection Status */}
+        {!isConnected && (
+          <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-center">
+            <p className="text-yellow-800 text-sm">
+              Reconnecting to live updates...
+            </p>
+          </div>
+        )}
+        
         <Navigation
           activeView={activeView}
           onViewChange={handleViewChange}

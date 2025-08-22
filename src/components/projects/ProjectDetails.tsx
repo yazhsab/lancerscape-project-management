@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useProjectDetails } from '../../hooks/useProjects';
 import { useProjectProposals } from '../../hooks/useProposals';
 import { useProjectMilestones } from '../../hooks/useMilestones';
-import { useProjectFiles } from '../../hooks/useFiles';
+import { useProjectFiles, useFileUpload, useFileDelete, useFileDownload } from '../../hooks/useFiles';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -41,6 +41,10 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const { data: proposals, isLoading: proposalsLoading } = useProjectProposals(projectId);
   const { data: milestones, isLoading: milestonesLoading, refetch: refetchMilestones } = useProjectMilestones(projectId);
   const { data: files, isLoading: filesLoading } = useProjectFiles(projectId);
+  
+  const fileUpload = useFileUpload();
+  const fileDelete = useFileDelete();
+  const fileDownload = useFileDownload();
 
   if (projectLoading) {
     return (
@@ -250,17 +254,31 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                       <FileManager
                         projectId={projectId}
                         files={files || []}
-                        onFileUpload={(files, category, milestoneId) => {
-                          // Handle file upload
-                          console.log('Upload files:', files, category, milestoneId);
+                        onFileUpload={async (files, category, milestoneId) => {
+                          try {
+                            await fileUpload.mutateAsync({
+                              projectId,
+                              files,
+                              category,
+                              milestoneId
+                            });
+                          } catch (error) {
+                            console.error('File upload failed:', error);
+                          }
                         }}
-                        onFileDelete={(fileId) => {
-                          // Handle file delete
-                          console.log('Delete file:', fileId);
+                        onFileDelete={async (fileId) => {
+                          try {
+                            await fileDelete.mutateAsync({ projectId, fileId });
+                          } catch (error) {
+                            console.error('File delete failed:', error);
+                          }
                         }}
-                        onFileDownload={(fileId) => {
-                          // Handle file download
-                          console.log('Download file:', fileId);
+                        onFileDownload={async (fileId) => {
+                          try {
+                            await fileDownload.mutateAsync({ projectId, fileId });
+                          } catch (error) {
+                            console.error('File download failed:', error);
+                          }
                         }}
                         userRole={userType}
                       />

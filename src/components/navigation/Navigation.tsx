@@ -10,6 +10,8 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationCenter from '../notifications/NotificationCenter';
 import Button from '../common/Button';
 
 interface NavigationProps {
@@ -26,6 +28,10 @@ const Navigation: React.FC<NavigationProps> = ({
   onUserTypeChange
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [notificationCenterOpen, setNotificationCenterOpen] = React.useState(false);
+  
+  const { data: notifications } = useNotifications();
+  const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
   const navItems = [
     { 
@@ -130,9 +136,16 @@ const Navigation: React.FC<NavigationProps> = ({
             </div>
 
             {/* Notifications */}
-            <button className="p-2 text-gray-600 hover:text-[#222] hover:bg-gray-100 rounded-lg transition-colors relative">
+            <button 
+              onClick={() => setNotificationCenterOpen(true)}
+              className="p-2 text-gray-600 hover:text-[#222] hover:bg-gray-100 rounded-lg transition-colors relative"
+            >
               <Bell size={20} />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF9800] rounded-full"></div>
+              {unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[#FF9800] text-white text-xs rounded-full flex items-center justify-center font-medium">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </div>
+              )}
             </button>
 
             {/* Profile */}
@@ -215,6 +228,12 @@ const Navigation: React.FC<NavigationProps> = ({
           </motion.div>
         )}
       </div>
+      
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={notificationCenterOpen}
+        onClose={() => setNotificationCenterOpen(false)}
+      />
     </nav>
   );
 };
